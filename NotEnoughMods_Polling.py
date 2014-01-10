@@ -17,6 +17,8 @@ class NotEnoughClasses():
     
     newMods = False
     mods = {}
+    rawModList = {}
+    pendingUpdateData = {}
     
     def __init__(self):
         self.useragent = urllib2.build_opener()
@@ -97,6 +99,8 @@ class NotEnoughClasses():
                     
                     jsonres = simplejson.loads(rawJson, strict = False)
                     
+                    self.rawModList[ version ] = jsonres
+                    
                     for mod in jsonres:
                         if mod["name"] in templist:
                             self.mods[mod["name"]]["mc"] = version
@@ -116,7 +120,7 @@ class NotEnoughClasses():
             pass
             #most likely a timeout
         
-    def CheckJenkins(self, mod):
+    def CheckJenkins(self, mod,tempList):
         result = self.fetch_page(self.mods[mod]["jenkins"]["url"])
         jsonres = simplejson.loads(result, strict = False )
         filename = jsonres["artifacts"][self.mods[mod]["jenkins"]["item"]]["fileName"]
@@ -127,7 +131,7 @@ class NotEnoughClasses():
         except:
             output["change"] = "NOT_USED"
         return output
-    def CheckMCForge2(self,mod):
+    def CheckMCForge2(self,mod,tempList):
         result = self.fetch_page(self.mods[mod]["mcforge"]["url"])
         jsonres = simplejson.loads(result, strict=False)
         
@@ -139,7 +143,7 @@ class NotEnoughClasses():
                 }
         return {}
 
-    def CheckMCForge(self,mod):
+    def CheckMCForge(self,mod,tempList):
         result = self.fetch_page("http://files.minecraftforge.net/"+self.mods[mod]["mcforge"]["name"]+"/json")
         jsonres = simplejson.loads(result, strict = False )
         promotionArray = jsonres["promotions"]
@@ -170,14 +174,14 @@ class NotEnoughClasses():
             output["dev"] = devMatch.group(2)
             return output
             
-    def CheckChickenBones(self,mod):
+    def CheckChickenBones(self,mod,tempList):
         result = self.fetch_page("http://www.chickenbones.craftsaddle.org/Files/New_Versions/version.php?file="+mod+"&version="+self.mods[mod]["mc"])
         if result.startswith("Ret: "): #Hacky I know, but this is how ChickenBones does it in his mod
             return {
                 "version" : result[5:]
             }
             
-    def CheckmDiyo(self,mod):
+    def CheckmDiyo(self,mod,tempList):
         result = self.fetch_page("http://tanis.sunstrike.io/"+self.mods[mod]["mDiyo"]["location"])
         lines = result.split()
         result = ""
@@ -188,7 +192,7 @@ class NotEnoughClasses():
         output = match.groupdict()
         return output
         
-    def CheckAE(self,mod):
+    def CheckAE(self,mod,tempList):
         result = self.fetch_page("http://ae-mod.info/releases")
         jsonres = simplejson.loads(result, strict = False )
         jsonres = sorted(jsonres, key=lambda k: k['Released'])
@@ -209,7 +213,7 @@ class NotEnoughClasses():
             "mc" : devMC #TODO: this doesn't seem reliable...
         }
         
-    def CheckDropBox(self,mod):
+    def CheckDropBox(self,mod,tempList):
         result = self.fetch_page(self.mods[mod]["html"]["url"])
         match = None
         for match in re.finditer(self.mods[mod]["html"]["regex"], result):
@@ -226,7 +230,7 @@ class NotEnoughClasses():
         else:
             return {}
         
-    def CheckHTML(self,mod):
+    def CheckHTML(self,mod,tempList):
         result = self.fetch_page(self.mods[mod]["html"]["url"])
         output = {}
         for line in result.splitlines():
@@ -235,17 +239,44 @@ class NotEnoughClasses():
                 output = match.groupdict()
         return output
         
-    def CheckSpacechase(self,mod):
-        result = self.fetch_page("http://spacechase0.com/wp-content/plugins/mc-mod-manager/nem.php?mc=6")
+    def CheckSpacechase(self,mod,tempList):
+        result = self.fetch_page("http://spacechase0.com/wp-content/plugins/mc-mod-manager/nem.php?mc="+self.mods[mod]["spacechase0"]["siteversion"])
         for line in result.splitlines():
             info = line.split(',')
-            #0 = ID, 1=NEM ID, 2=ModID, 3=Author, 4=Link, 5=Version, 6=Comment
-            if info[1] == mod:
-                return {
-                    "version" : info[5]
-                }
+            #0 = ID, 1=NEM ID, 2=ModID, 3=Author, 4=Link, 5=Version, 6=Dependencies, 7=Changelog Link, 8=Comment
+            
+            if info[ 1 ] == "NEM id":
+                continue
+            
+            targetList = str( self.mods[ mod ][ "spacechase0" ][ "list" ] )
+            
+            data = {}
+            nemMod = self.FindMod( targetList, info[ 1 ] )
+            if nemMod is None:
+                """data[ "init" ] = True
+                data[ "author" ] = info[ 3 ]
+                data[ "link" ] = info[ 4 ]
+                data[ "modid" ] = info[ 2 ]
+                data[ "deps" ] = convert deps to array
+                data[ "comment" ] = find nth occurence"""
+                continue
+            elif info[ 5 ] == nemMod[ "version" ]:
+                continue
+            data[ "version" ] = info[ 5 ]
+            data[ "change" ] = self.fetch_page( info[ 7 ] )
+            
+            nemMod[ "version" ] = info[ 5 ]
+            
+            updateData = ( info[ 1 ], [ False, True ] )
+            if targetList in tempList:
+                tempList[ targetList ].append( updateData )
+            else:
+                tempList[ targetList ] = [ updateData ]
+            
+            self.pendingUpdateData[ targetList + "~" + info[ 1 ] ] = data
+        
         return {}
-    def CheckLunatrius(self,mod):
+    def CheckLunatrius(self,mod,tempList):
         result = self.fetch_page("http://mc.lunatri.us/json?latest&mod="+mod)
         jsonres = simplejson.loads(result, strict = False )
         info = jsonres["mods"][mod]["latest"]
@@ -253,20 +284,20 @@ class NotEnoughClasses():
             "version" : info["version"],
             "mc" : info["mc"]
         }
-    def CheckBigReactors(self,mod):
+    def CheckBigReactors(self,mod,tempList):
         result = self.fetch_page("http://big-reactors.com/version.json")
         info = simplejson.loads(result, strict = False)
         return {
             "version" : info["version"],
             "mc" : info["version-minecraft"]
         }
-    def CheckMod(self, mod):
+    def CheckMod(self, mod, tempList):
         try:
             # First False is for if there was an update.
             # Next two Falses are for if there was an dev or version change
             status = [False, 
                       False, False]
-            output = getattr(self, self.mods[mod]["function"])(mod)
+            output = getattr(self, self.mods[mod]["function"])(mod, tempList)
             if "dev" in output:
                 if self.mods[mod]["dev"] != output["dev"]:
                     self.mods[mod]["dev"] = output["dev"]
@@ -286,6 +317,11 @@ class NotEnoughClasses():
             print(mod+" failed to be polled...")
             traceback.print_exc()
             return [False, False, False]
+    def FindMod(self, listName, modName):
+        for mod in self.rawModList[ listName ]:
+            if mod["name"] == modName:
+                return mod
+        return None
     
 NEM = NotEnoughClasses()
 
@@ -325,7 +361,7 @@ def PollingThread(self, pipe):
         else:
             real_name = mod
         if NEM.mods[mod]["active"]:
-            result = NEM.CheckMod(mod)
+            result = NEM.CheckMod(mod,tempList)
             if result[0]:
                 if NEM.mods[mod]["mc"] in tempList:
                     tempList[NEM.mods[mod]["mc"]].append((real_name, result[1:]))
@@ -357,15 +393,32 @@ def MicroTimerEvent(self,channels):
                     mod = item[0]
                     flags = item[1]
                     
-                    if NEM.mods[mod]["dev"] != "NOT_USED" and flags[0]:
-                        self.writeQueue("Updating DevMod {0}, Flags: {1}".format(mod, flags), "NEMP")
-                        self.sendChatMessage(self.send, channel, "!ldev "+version+" "+mod+" "+unicode(NEM.mods[mod]["dev"]))
-                    if NEM.mods[mod]["version"]  != "NOT_USED" and flags[1]:
-                        self.writeQueue("Updating Mod {0}, Flags: {1}".format(mod, flags), "NEMP")
-                        self.sendChatMessage(self.send, channel, "!lmod "+version+" "+mod+" "+unicode(NEM.mods[mod]["version"]))
-                    if NEM.mods[mod]["change"] != "NOT_USED" and "changelog" not in NEM.mods[mod]:
-                        self.writeQueue("Sending text for Mod {0}".format(mod), "NEMP")
-                        self.sendChatMessage(self.send, channel, " * "+NEM.mods[mod]["change"].encode("utf-8"))
+                    if mod in NEM.mods or (version + "~" + mod) in NEM.pendingUpdateData:
+                        modUpdate = NEM.mods
+                        modKey = mod
+                        if (version + "~" + mod) in NEM.pendingUpdateData:
+                            modUpdate = NEM.pendingUpdateData
+                            modKey = version + "~" + mod
+                            
+                            if "dev" not in modUpdate[ modKey ]:
+                                modUpdate[ modKey ][ "dev" ] = "NOT_USED";
+                            if "version" not in modUpdate[ modKey ]:
+                                modUpdate[ modKey ][ "version" ] = "NOT_USED";
+                            if "change" not in modUpdate[ modKey ]:
+                                modUpdate[ modKey ][ "change" ] = "NOT_USED";
+                        
+                        if modUpdate[modKey]["dev"] != "NOT_USED" and flags[0]:
+                            self.writeQueue("Updating DevMod {0}, Flags: {1}".format(mod, flags), "NEMP")
+                            self.sendChatMessage(self.send, channel, "!ldev "+version+" "+mod+" "+unicode(modUpdate[modKey]["dev"]))
+                        if modUpdate[modKey]["version"]  != "NOT_USED" and flags[1]:
+                            self.writeQueue("Updating Mod {0}, Flags: {1}".format(mod, flags), "NEMP")
+                            self.sendChatMessage(self.send, channel, "!lmod "+version+" "+mod+" "+unicode(modUpdate[modKey]["version"]))
+                        if modUpdate[modKey]["change"] != "NOT_USED" and "changelog" not in modUpdate[modKey]:
+                            self.writeQueue("Sending text for Mod {0}".format(mod), "NEMP")
+                            self.sendChatMessage(self.send, channel, " * "+modUpdate[modKey]["change"].encode("utf-8"))
+                        
+                        if (version + "~" + mod) in NEM.pendingUpdateData:
+                            del NEM.pendingUpdateData[ version + "~" + mod ]
                 
 def poll(self, name, params, channel, userdata, rank):
     if len(params) < 3:
@@ -481,8 +534,8 @@ def test_parser(self,name,params,channel,userdata,rank):
             self.sendChatMessage(self.send, channel, name+": No polling info for \""+params[1]+"\"")
             return
         try:
-            result = getattr(NEM,NEM.mods[params[1]]["function"])(params[1])
-            print(result)
+            tempList = {}
+            result = getattr(NEM,NEM.mods[params[1]]["function"])(params[1],tempList)
             if "mc" in result:
                 self.sendChatMessage(self.send,channel, "!setlist "+result["mc"])
             if "version" in result:

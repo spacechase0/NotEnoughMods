@@ -314,125 +314,23 @@
         "function" : "CheckAE",
         "active" : false
     },
-    "CheaperArrows" : {
+    "spacechase0_1.6" : {
         "function" : "CheckSpacechase",
         "category" : "sc0",
-        "active" : true
+        "active" : true,
+        "spacechase0" : {
+            "siteversion" : "6",
+            "list" : "1.6.4"
+        }
     },
-    "EverlastingTools" : {
+    "spacechase0_1.7" : {
         "function" : "CheckSpacechase",
         "category" : "sc0",
-        "active" : true
-    },
-    "CondensedPotions" : {
-        "function" : "CheckSpacechase",
-        "category" : "sc0",
-        "active" : true
-    },
-    "OldBookRecipe" : {
-        "function" : "CheckSpacechase",
-        "category" : "sc0",
-        "active" : true
-    },
-    "TextFormatting" : {
-        "function" : "CheckSpacechase",
-        "category" : "sc0",
-        "active" : true
-    },
-    "StoneBrickRecipes" : {
-        "function" : "CheckSpacechase",
-        "category" : "sc0",
-        "active" : true
-    },
-    "SurvivalWings" : {
-        "function" : "CheckSpacechase",
-        "category" : "sc0",
-        "active" : true
-    },
-    "ThirdPersonCamera" : {
-        "function" : "CheckSpacechase",
-        "category" : "sc0",
-        "active" : true
-    },
-    "BiomeWand" : {
-        "function" : "CheckSpacechase",
-        "category" : "sc0",
-        "active" : true
-    },
-    "DecorativeStuff" : {
-        "function" : "CheckSpacechase",
-        "category" : "sc0",
-        "active" : true
-    },
-    "CraftableEnchantmentBooks" : {
-        "function" : "CheckSpacechase",
-        "category" : "sc0",
-        "active" : true
-    },
-    "ToggleSpawners" : {
-        "function" : "CheckSpacechase",
-        "category" : "sc0",
-        "active" : true
-    },
-    "ToxicRain" : {
-        "function" : "CheckSpacechase",
-        "category" : "sc0",
-        "active" : true
-    },
-    "Auto-Fisher" : {
-        "function" : "CheckSpacechase",
-        "category" : "sc0",
-        "active" : true
-    },
-    "UsefulPets" : {
-        "function" : "CheckSpacechase",
-        "category" : "sc0",
-        "active" : true
-    },
-    "SpaceCore" : {
-        "function" : "CheckSpacechase",
-        "category" : "sc0",
-        "active" : true
-    },
-    "SpelunkerDimension" : {
-        "function" : "CheckSpacechase",
-        "category" : "sc0",
-        "active" : true
-    },
-    "ComponentEquipment" : {
-        "function" : "CheckSpacechase",
-        "category" : "sc0",
-        "active" : true
-    },
-    "MorePotionTypes" : {
-        "function" : "CheckSpacechase",
-        "category" : "sc0",
-        "active" : true
-    },
-    "UsefulPetsAddon_PainterlyTextures" : {
-        "function" : "CheckSpacechase",
-        "category" : "sc0",
-        "active" : true
-    },
-    "Chunk-in-a-Jar" : {
-        "function" : "CheckSpacechase",
-        "category" : "sc0",
-        "active" : true
-    },
-    "WindWaker" : {
-        "function" : "CheckSpacechase",
-        "category" : "sc0",
-        "active" : true
-    },
-    "LargerInventoryAndHotbar" : {
-        "function" : "CheckSpacechase",
-        "category" : "sc0",
-        "active" : true
-    },
-    "EnderTech" : {
-        "function" : "CheckSpacechase",
-        "category" : "sc0",
-        "active" : true
+        "active" : true,
+        "spacechase0" : {
+            "siteversion" : "7",
+            "list" : "1.7.2"
+        }
     },
     "BloodMagic" : {
         "function" : "CheckDropBox",
